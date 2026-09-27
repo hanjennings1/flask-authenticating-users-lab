@@ -1,21 +1,58 @@
 # Lab: Authenticating Users
+**Completed Sept 27, 2026**
 
-## Scenario
+## Description
 
-In this lab, we'll continue working on the blog site from the last lab and set
-up a basic login feature.
-
-## Tools & Resources
-
-- [GitHub Repo](https://github.com/learn-co-curriculum/flask-authenticating-users-lab)
-- [What is Authentication? - auth0](https://auth0.com/intro-to-iam/what-is-authentication)
-- [API - Flask: class flask.session](https://flask.palletsprojects.com/en/2.2.x/api/#flask.session)
-
-## Set Up
-
-There is some starter code in place for a Flask API backend and a React
-frontend. To get set up, run:
-
+A full-stack blog application with a basic login feature, built with a Flask API
+backend and a React frontend. Users can log in with their username, log out, and
+stay logged in after refreshing the page, using Flask's `session` to persist the
+logged-in user between requests.
+ 
+![Completed Flask authentication lab](flask-authentication-lab.png)
+ 
+## Features
+ 
+- **Log in** by entering a username in a form. The server finds the user, stores
+  their `id` in the session, and returns the user as JSON.
+- **Log out**, which clears the user from the session.
+- **Stay logged in** after a page refresh. On load, the React app asks the server
+  whether a session exists and restores the logged-in user if it does.
+  
+## How It Works
+ 
+HTTP is stateless, so the server needs a way to remember who is logged in between
+requests. When a user logs in, the server saves their `user_id` in Flask's
+`session`. Flask signs that data with the app's `secret_key` and sends it to the
+browser as a cookie. The browser sends the cookie back with every later request,
+which lets the server identify the user.
+ 
+The React frontend proxies API requests to the Flask server (configured in
+`client/package.json`), which avoids CORS issues and allows the session cookie to
+be shared between the frontend and backend.
+ 
+## API Endpoints
+ 
+| Resource       | Method | Route            | Success Response           | Other Responses              |
+| -------------- | ------ | ---------------- | -------------------------- | ---------------------------- |
+| `Login`        | POST   | `/login`         | User JSON, `200 OK`        |                              |
+| `Logout`       | DELETE | `/logout`        | No content, `204`          |                              |
+| `CheckSession` | GET    | `/check_session` | User JSON, `200 OK`        | No content, `401 Unauthorized` if no one is logged in |
+| `ClearSession` | DELETE | `/clear`         | No content, `204`          |                              |
+| `IndexArticle` | GET    | `/articles`      | List of articles, `200 OK` |                              |
+| `ShowArticle`  | GET    | `/articles/<id>` | Article JSON, `200 OK`     | `401` after 3 page views     |
+ 
+Example login request body:
+ 
+```json
+{
+  "username": "Thomas"
+}
+```
+ 
+## Installation
+ 
+Clone the repository, then from the project root run:
+ 
 ```bash
 pipenv install && pipenv shell
 npm install --prefix client
@@ -23,144 +60,64 @@ cd server
 flask db upgrade
 python seed.py
 ```
-
-You can work on this lab by running the tests with `pytest -x`. It will also be
-helpful to see what's happening during the request/response cycle by running the
-app in the browser. You can run the Flask server with:
-
+ 
+## Usage
+ 
+Start the Flask server from the `server` directory:
+ 
 ```bash
 python app.py
 ```
-
-And you can run React in another terminal with:
-
+ 
+The API runs at `http://localhost:5555`.
+ 
+In a second terminal, start the React frontend from the project root:
+ 
 ```bash
 npm start --prefix client
 ```
-
-You don't have to make any changes to the React code to get this lab working.
-The React frontend has already defined a proxy in `package.json` as shown:
-
-```json
-"proxy": "http://localhost:5555",
-```
-
-The proxy avoids CORS issues and allows the server to set a session cookie to
-store the user's login data.
-
-## Instructions
-
-### Task 1: Define the Problem
-
-For our basic login feature, we'll need the following functionality:
-
-- A user can log in by providing their username in a form.
-- A user can log out.
-- A user can remain logged in, even after refreshing the page.
-
-We'll need to create the resources to handle each of these features.
-
-### Task 2: Determine the Design
-
-We'll need to build the following resources:
-
-- `Login` is located at `/login`.
-
-  - It has one route, `post()`.
-  - `post()` gets a `username` from `request`'s JSON.
-  - `post()` retrieves the user by `username` (we made these unique for you).
-  - `post()` sets the session's `user_id` value to the user's `id`.
-  - `post()` returns the user as JSON with a 200 status code.
-
-- `Logout` is located at `/logout`.
-
-  - It has one route, `delete()`.
-  - `delete()` removes the `user_id` value from the session.
-  - `delete()` returns no data and a 204 (No Content) status code.
-
-- `CheckSession` is located at `/check_session`.
-  - It has one route, `get()`.
-  - `get()` retrieves the `user_id` value from the session.
-  - If the session has a `user_id`, `get()` returns the user as JSON with a 200
-    status code.
-  - If the session does not have a `user_id`, `get()` returns no data and a 401
-    (Unauthorized) status code.
-
-### Task 3: Develop, Test, and Refine the Code
-
-#### Step 1: Create Routes
-
-- /login, post()
-  - should handle the request to get username
-  - find User in database by username. We'll need the id for the next step.
-- /delete, delete()
-- /check_session, get()
-
-#### Step 2: Initialize, Retrieve, and/or Update Session
-
-- Session: /login post()
-  - set session['user_id'] to the found user's id
-- Session: /logout delete()
-  - remove the value for session['user_id']
-- Session: /check_session get()
-  - get current value of session['user_id'] (it may not exist)
-
-#### Step 3: Return the Response
-
-- Session: /login post()
-  - return user as JSON with a 200 status code
-- Session: /logout delete()
-  - returns no data and a 204 (No Content) status code
-- Session: /check_session get()
-  - If the session has a `user_id`, `get()` returns the user as JSON with a 200
-    status code.
-  - If the session does not have a `user_id`, `get()` returns no data and a 401
-    (Unauthorized) status code.
-
-The tests are not looking for invalid users for /login, but if you have extra time, consider what response you should send if a user is not found with the given username.
-
-#### Step 4: Test and Refine the Code
-
-Run the test suite:
-
+ 
+The app opens at `http://localhost:4000`. Log in with any seeded username
+(for example, `Thomas`). Usernames are case-sensitive.
+ 
+To see all seeded usernames, run `flask shell` from the `server` directory and
+enter `User.query.all()`.
+ 
+## Running Tests
+ 
+From the project root:
+ 
 ```bash
 pytest
 ```
-
-If any tests aren't passing, refine your code using each error message.
-
-View the app in browser and test login, logout, and session persistence. Refine code if needed.
-
-Feel free to also take a look at how the frontend logic is set up to use these endpoints.
-
-#### Step 5: Commit and Push Git History
-
-* Commit and push your code:
-
-```bash
-git add .
-git commit -m "final solution"
-git push
+ 
+All tests pass.
+ 
+## Project Structure
+ 
 ```
-
-* If you created a separate feature branch, remember to open a PR on main and merge.
-
-### Task 4: Document and Maintain
-
-Best Practice documentation steps:
-* Add comments to the code to explain purpose and logic, clarifying intent and functionality of your code to other developers.
-* Update README text to reflect the functionality of the application following https://makeareadme.com. 
-  * Add screenshot of completed work included in Markdown in README.
-* Delete any stale branches on GitHub
-* Remove unnecessary/commented out code
-* If needed, update git ignore to remove sensitive data
-
-## Important Submission Note
-
-Before you submit your solution, you need to save your progress with git.
-
-1. Add your changes to the staging area by executing `git add .`.
-2. Create a commit by executing `git commit -m "Your commit message"`.
-3. Push your commits to GitHub by executing `git push origin main`.
-
-CodeGrade will grade your lab using the same tests as are provided in the `testing/` directory.
+flask-authenticating-users-lab/
+├── client/            # React frontend
+├── server/
+│   ├── app.py         # Flask app and API resources
+│   ├── models.py      # SQLAlchemy models and marshmallow schemas
+│   ├── seed.py        # Seeds the database with users and articles
+│   └── migrations/    # Database migrations
+├── Pipfile            # Python dependencies
+└── pytest.ini         # Test configuration
+```
+ 
+## Technologies
+ 
+- Python, Flask, Flask-RESTful, Flask-SQLAlchemy, Flask-Migrate
+- marshmallow for serialization
+- SQLite
+- React
+- pytest
+## Known Limitations
+ 
+- Authentication is by username only, with no passwords, so this is not suitable
+  for production use.
+- Logging in with a username that does not exist is not yet handled and causes a
+  server error. A future improvement would return a `401` or `404` with an error
+  message.
