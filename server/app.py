@@ -54,13 +54,19 @@ class Login(Resource):
         username = request.get_json().get('username')
         user = User.query.filter(User.username == username).first()
 
+        #set session['user_id'] to the found user's id
+        session['user_id'] = user.id
+
+
 class Logout(Resource):
     def delete(self):
-        pass
+        #remove the value for session['user_id']
+        session['user_id'] = None
 
 class CheckSession(Resource):
     def get(self):
-        pass
+        #get current value of session['user_id'] (it may not exist)
+        user_id = session.get('user_id')
 
 
 api.add_resource(ClearSession, '/clear')
